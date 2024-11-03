@@ -1,5 +1,5 @@
 import sqlite3
-
+import logging
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
 conn_count = 0
@@ -11,6 +11,7 @@ def get_db_connection():
     connection = sqlite3.connect('database.db')
     connection.row_factory = sqlite3.Row
     conn_count = conn_count + 1
+    app.logger.info("DB Connection established")
     return connection
 
 # Function to get a post using its ID
@@ -24,6 +25,9 @@ def get_post(post_id):
 # Define the Flask application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your secret key'
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG level; change to INFO for production
+app.logger.setLevel(logging.DEBUG)
 
 # Define the main route of the web application 
 @app.route('/')
@@ -31,21 +35,26 @@ def index():
     connection = get_db_connection()
     posts = connection.execute('SELECT * FROM posts').fetchall()
     connection.close()
+    app.logger.info("Main route called")
     return render_template('index.html', posts=posts)
 
 # Define how each individual article is rendered 
 # If the post ID is not found a 404 page is shown
 @app.route('/<int:post_id>')
 def post(post_id):
+    app.logger.info("A certain post is called")
     post = get_post(post_id)
     if post is None:
+      app.logger.info("The Post doesnt exists, returning 404 error page")
       return render_template('404.html'), 404
     else:
+      app.logger.info(f"The Post is {post['title']}")
       return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
+    app.logger.info("About Us called")
     return render_template('about.html')
 
 # Define the post creation functionality 
@@ -54,7 +63,7 @@ def create():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-
+        app.logger.info("Post Created with title: " + str(title))
         if not title:
             flash('Title is required!')
         else:
@@ -76,8 +85,8 @@ def healthcheck():
             status=200,
             mimetype='application/json'
     )
-    app.logger.info('Status request successfull')
-    app.logger.debug('DEBUG message')
+    app.logger.info('Heatlh request successfull')
+    app.logger.debug('Debug Message')
     return response
 
 @app.route('/metrics')
@@ -96,6 +105,7 @@ def metrics():
         status=200,
         mimetype='application/json'
     )
+    app.logger.info('Metrics Send')
     return response
 
 # start the application on port 3111

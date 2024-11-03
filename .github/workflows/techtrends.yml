@@ -27,6 +27,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .  # Use the root directory of the repository as the context
-          file: ./project/dockerfile 
+          file: ./Dockerfile 
           push: true  
           tags: ${{ secrets.DOCKERHUB_UNAME }}/techtrends:latest

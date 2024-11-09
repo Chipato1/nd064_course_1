@@ -1,0 +1,33 @@
+namespace:
+  name: sandbox
+
+containerPort: 3111
+replicaCount: 1
+
+service:
+  port: 4111
+  targetPort: 3111
+  protocol: TCP
+  type: ClusterIP
+
+image:
+  repository: chipato/techtrends 
+  tag: latest
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+    cpu: 500m
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 3111
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: 3111

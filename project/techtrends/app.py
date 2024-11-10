@@ -2,6 +2,8 @@ import sqlite3
 import logging
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
+import sys
+
 conn_count = 0
 
 # Function to get a database connection.
@@ -26,8 +28,23 @@ def get_post(post_id):
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your secret key'
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG level; change to INFO for production
+
 app.logger.setLevel(logging.DEBUG)
+
+class InfoFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno == logging.INFO
+
+
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.INFO)
+stdout_handler.addFilter(InfoFilter())  # Only allow INFO level
+app.logger.addHandler(stdout_handler)
+
+stderr_handler = logging.StreamHandler(sys.stderr)
+stderr_handler.setLevel(logging.WARNING) 
+app.logger.addHandler(stderr_handler)
+
 
 # Define the main route of the web application 
 @app.route('/')
@@ -45,7 +62,7 @@ def post(post_id):
     app.logger.info("A certain post is called")
     post = get_post(post_id)
     if post is None:
-      app.logger.info("The Post doesnt exists, returning 404 error page")
+      app.logger.warning("The Post doesnt exists, returning 404 error page")
       return render_template('404.html'), 404
     else:
       app.logger.info(f"The Post is {post['title']}")
